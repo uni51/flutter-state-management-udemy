@@ -25,38 +25,68 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyHomePage> createState() => MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class MyHomePageState extends State<MyHomePage> {
+  int counter = 0;
 
-  void _incrementCounter() {
+  void incrementCounter() {
     setState(() {
-      _counter++;
+      counter++;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     print('MyHomePageStateをビルド');
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const WidgetA(),
-            WidgetB(_counter),
-            WidgetC(_incrementCounter),
-          ],
+    return MyHomePageInheritedWidget(
+      data: this,
+      counter: counter,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.title),
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const <Widget>[
+              WidgetA(),
+              WidgetB(),
+              WidgetC(),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+class MyHomePageInheritedWidget extends InheritedWidget {
+  const MyHomePageInheritedWidget({
+    Key? key,
+    required Widget child,
+    required this.data,
+    required this.counter
+  }) : super(key: key, child: child);
+
+  final MyHomePageState data;
+  final int counter;
+
+  static MyHomePageState of(BuildContext context, {bool listen = true}) {
+    if (listen) {
+      return (context.dependOnInheritedWidgetOfExactType<MyHomePageInheritedWidget>())!.data;
+    } else {
+      return (context.getElementForInheritedWidgetOfExactType<MyHomePageInheritedWidget>()!.widget as MyHomePageInheritedWidget).data;
+    }
+  }
+
+  @override
+  bool updateShouldNotify(MyHomePageInheritedWidget oldWidget) {
+    return true;
+  }
+}
+
 
 class WidgetA extends StatelessWidget {
   const WidgetA({Key? key}) : super(key: key);
@@ -71,29 +101,29 @@ class WidgetA extends StatelessWidget {
 }
 
 class WidgetB extends StatelessWidget {
-  const WidgetB(this.counter, {Key? key}) : super(key: key);
-  final int counter;
+  const WidgetB({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     print('WidgetBをビルド');
+    final MyHomePageState state = MyHomePageInheritedWidget.of(context);
     return Text(
-      '$counter',
+      '${state.counter}',
       style: Theme.of(context).textTheme.headlineMedium,
     );
   }
 }
 
 class WidgetC extends StatelessWidget {
-  const WidgetC(this.increment, {Key? key}) : super(key: key);
-  final Function increment;
+  const WidgetC({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     print('WidgetCをビルド');
+    final MyHomePageState state = MyHomePageInheritedWidget.of(context, listen: false);
     return ElevatedButton(
         onPressed: () {
-          increment();
+          state.incrementCounter();
         },
         child: const Text('カウント')
     );
